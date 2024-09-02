@@ -453,6 +453,8 @@ async def help_command(client, message):
 @colab_bot.on_message(filters.document & filters.private)
 async def handle_excel(client: Client, message: Message):
     global BOT, MSG
+    temp_source = []
+    temp_source_text = []
 
     if not message.document.file_name.endswith((".xlsx", ".xls")):
         await message.reply_text("Please send a valid Excel file.")
@@ -485,20 +487,17 @@ async def handle_excel(client: Client, message: Message):
                        f"Quality: {quality}\n"
                        f"File Size: {file_size}\n"
                        f"Web Info: {web_info}\n")
-
+            temp_source_text.append(caption)
             # Use the leecher to download the magnet link
             await message.reply_text(f"Downloading: {title} ({quality})")
-            os.system(
-                f'python3 -m telegram_leecher --magnet "{magnet_link}" --path "DOWNLOAD_FOLDER"')
 
-            # Send the caption and inform the user
-            await message.reply_text(f"Downloaded: {title} ({quality})\n{caption}")
+    BOT.SOURCE = temp_source
+    BOT.SOURCE_TEXT = temp_source_text
 
     BOT.Mode.type = "normal"
     await colab_bot.send_message(
         text="in progress...",
-        chat_id=message.chat.id,
-        message_ids=message.reply_to_message_id,
+        chat_id=OWNER,
     )
     MSG.status_msg = await colab_bot.send_message(
         chat_id=OWNER,
