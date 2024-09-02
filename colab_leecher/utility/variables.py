@@ -8,7 +8,9 @@ from pyrogram.types import Message
 
 class BOT:
     SOURCE = []
+    SOURCE_TEXT = []
     TASK = None
+
     class Setting:
         stream_upload = "Media"
         convert_video = "Yes"
@@ -73,7 +75,7 @@ class Paths:
     THMB_PATH = "/content/Telegram-Leecher/colab_leecher/Thumbnail.jpg"
     VIDEO_FRAME = f"{WORK_PATH}/video_frame.jpg"
     HERO_IMAGE = f"{WORK_PATH}/Hero.jpg"
-    DEFAULT_HERO =  "/content/Telegram-Leecher/custom_thmb.jpg"
+    DEFAULT_HERO = "/content/Telegram-Leecher/custom_thmb.jpg"
     MOUNTED_DRIVE = "/content/drive"
     down_path = f"{WORK_PATH}/Downloads"
     temp_dirleech_path = f"{WORK_PATH}/dir_leech_temp"
@@ -98,7 +100,6 @@ class Messages:
 class MSG:
     sent_msg = Message(id=1)
     status_msg = Message(id=2)
-
 
 
 class Aria2c:
