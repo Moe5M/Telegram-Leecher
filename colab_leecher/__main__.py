@@ -1,8 +1,10 @@
 # copyright 2024 © Xron Trix | https://github.com/Xrontrix10
 
-
-import logging, os
-from pyrogram import filters
+import pandas as pd
+import logging
+import os
+from pyrogram import Client, filters
+from pyrogram.types import Message
 from datetime import datetime
 from asyncio import sleep, get_event_loop
 from colab_leecher import colab_bot, OWNER
@@ -27,7 +29,8 @@ async def start(client, message):
                     "Repository 🦄",
                     url="https://github.com/XronTrix10/Telegram-Leecher",
                 ),
-                InlineKeyboardButton("Support 💝", url="https://t.me/Colab_Leecher"),
+                InlineKeyboardButton(
+                    "Support 💝", url="https://t.me/Colab_Leecher"),
             ],
         ]
     )
@@ -185,7 +188,8 @@ async def handle_options(client, callback_query):
         keyboard = InlineKeyboardMarkup(
             [
                 [
-                    InlineKeyboardButton("Convert", callback_data="convert-true"),
+                    InlineKeyboardButton(
+                        "Convert", callback_data="convert-true"),
                     InlineKeyboardButton(
                         "Don't Convert", callback_data="convert-false"
                     ),
@@ -195,7 +199,8 @@ async def handle_options(client, callback_query):
                     InlineKeyboardButton("To » Mkv", callback_data="mkv"),
                 ],
                 [
-                    InlineKeyboardButton("High Quality", callback_data="q-High"),
+                    InlineKeyboardButton(
+                        "High Quality", callback_data="q-High"),
                     InlineKeyboardButton("Low Quality", callback_data="q-Low"),
                 ],
                 [InlineKeyboardButton("Back ⏎", callback_data="back")],
@@ -209,12 +214,14 @@ async def handle_options(client, callback_query):
         keyboard = InlineKeyboardMarkup(
             [
                 [
-                    InlineKeyboardButton("Monospace", callback_data="code-Monospace"),
+                    InlineKeyboardButton(
+                        "Monospace", callback_data="code-Monospace"),
                     InlineKeyboardButton("Bold", callback_data="b-Bold"),
                 ],
                 [
                     InlineKeyboardButton("Italic", callback_data="i-Italic"),
-                    InlineKeyboardButton("Underlined", callback_data="u-Underlined"),
+                    InlineKeyboardButton(
+                        "Underlined", callback_data="u-Underlined"),
                 ],
                 [InlineKeyboardButton("Regular", callback_data="p-Regular")],
             ]
@@ -227,7 +234,8 @@ async def handle_options(client, callback_query):
         keyboard = InlineKeyboardMarkup(
             [
                 [
-                    InlineKeyboardButton("Delete Thumbnail", callback_data="del-thumb"),
+                    InlineKeyboardButton(
+                        "Delete Thumbnail", callback_data="del-thumb"),
                 ],
                 [
                     InlineKeyboardButton("Go Back ⏎", callback_data="back"),
@@ -440,6 +448,74 @@ async def help_command(client, message):
     )
     await sleep(15)
     await message_deleter(message, msg)
+
+
+@colab_bot.on_message(filters.document & filters.private)
+async def handle_excel(client: Client, message: Message):
+    global BOT, MSG
+
+    if not message.document.file_name.endswith((".xlsx", ".xls")):
+        await message.reply_text("Please send a valid Excel file.")
+        return
+
+    # Download the Excel file
+    file_path = await message.download()
+
+    # Process the Excel file
+    df = pd.read_excel(file_path)
+
+    for index, row in df.iterrows():
+        title = row['Title']
+        release_year = row['Release Year']
+        genre = row['Genre']
+        plot_summary = row['Plot Summary']
+        magnet_links = eval(row['Magnet Links'])
+
+        for magnet in magnet_links:
+            quality = magnet['Quality']
+            magnet_link = magnet['Magnet Link']
+            file_size = magnet['File Size']
+            web_info = magnet['Web Info']
+
+            # Create the caption
+            caption = (f"Title: {title}\n"
+                       f"Release Year: {release_year}\n"
+                       f"Genre: {genre}\n"
+                       f"Plot Summary: {plot_summary}\n"
+                       f"Quality: {quality}\n"
+                       f"File Size: {file_size}\n"
+                       f"Web Info: {web_info}\n")
+
+            # Use the leecher to download the magnet link
+            await message.reply_text(f"Downloading: {title} ({quality})")
+            os.system(
+                f'python3 -m telegram_leecher --magnet "{magnet_link}" --path "DOWNLOAD_FOLDER"')
+
+            # Send the caption and inform the user
+            await message.reply_text(f"Downloaded: {title} ({quality})\n{caption}")
+
+    BOT.Mode.type = "normal"
+    await colab_bot.send_message(
+        text="in progress...",
+        chat_id=message.chat.id,
+        message_ids=message.reply_to_message_id,
+    )
+    MSG.status_msg = await colab_bot.send_message(
+        chat_id=OWNER,
+        text="#STARTING_TASK\n\n**Starting your task in a few Seconds...🦐**",
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton("Cancel ❌", callback_data="cancel")],
+            ]
+        ),
+    )
+    BOT.State.task_going = True
+    BOT.State.started = False
+    BotTimes.start_time = datetime.now()
+    event_loop = get_event_loop()
+    BOT.TASK = event_loop.create_task(taskScheduler())  # type: ignore
+    await BOT.TASK
+    BOT.State.task_going = False
 
 
 logging.info("Colab Leecher Started !")
